@@ -2,16 +2,15 @@
 
 /**
  * @file
- * Defines the ZipBatchImporter.
+ * Defines the BagBatchImporter.
  */
 
 /**
- * Zip file importer.
- * @author adam
+ * Bag importer.
  */
-class ZipBatchImporter extends IslandoraBatchImporter {
+class BagBatchImporter extends IslandoraBatchImporter {
 
-  protected $itemClass = 'ZipBatchImportObject';
+  protected $itemClass = 'BagBatchImportObject';
 
   /**
    * Get the number of items to import from $this->file.
@@ -57,11 +56,11 @@ class ZipBatchImporter extends IslandoraBatchImporter {
     return array(
       'fs' => array(
         '#type' => 'fieldset',
-        '#title' => t('Zip Batch Importer'),
-        '#description' => t('Select the file containing the assets and metadata to import. Assets and metadata will be matched together based on the portion of the filename without the extension - e.g. my_file.xml and my_file.pdf would be combined into a single object.'),
+        '#title' => t('Bag Batch Importer'),
+        '#description' => t('Select the file containing the serialized bag to import.'),
         'file' => array(
           '#type' => 'managed_file',
-          '#title' => t('Zip file containing files to import'),
+          '#title' => t('Bag containing files to import'),
           '#upload_validators' => array(
             'file_validate_extensions' => array('zip'),
           ),
@@ -170,12 +169,11 @@ class ZipBatchImporter extends IslandoraBatchImporter {
 }
 
 /**
- * ZIP import object.
+ * Bag import object.
  *
  * Actually does the heavy-lifting during the import.
- * @author adam
  */
-class ZipBatchImportObject extends IslandoraImportObject {
+class BagBatchImportObject extends IslandoraImportObject {
 
   protected $mods;
   protected static $MARC2MODS;
@@ -196,7 +194,7 @@ class ZipBatchImportObject extends IslandoraImportObject {
     parent::__construct($source);
     $this->pidNamespace = $this->source['pid_namespace'];
     $this->contentModel = (array) $this->source['content_model'];
-    $transform_path = drupal_get_path('module', 'zip_importer') . '/xsl';
+    $transform_path = drupal_get_path('module', 'bag_importer') . '/xsl';
     self::$MARC2MODS = "$transform_path/MARC21slim2MODS3-4.xsl";
     self::$DC2MODS = "$transform_path/simpleDC2MODS.xsl";
     self::$DWC2DC = "$transform_path/dwc_to_dc.xsl";
@@ -399,7 +397,7 @@ EOXML;
   /**
    * Generate DC to describe the imported data.
    *
-   * @see ZipBatchImportObject::getDC()
+   * @see BagBatchImportObject::getDC()
    *
    * @return string
    *   A string containing DC XML.
@@ -433,7 +431,7 @@ EOXML;
    *   The label to use for the datastream.
    */
   protected function getLabel($dsid, $datastream) {
-    $use_filename = variable_get('zip_importer_use_filenames_as_labels', FALSE);
+    $use_filename = variable_get('bag_importer_use_filenames_as_labels', FALSE);
     if (isset($this->source['object_info']['xml'])) {
       $xml_filename = $this->source['object_info']['xml'];
       $xml = $this->getXML();

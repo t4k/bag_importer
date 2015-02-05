@@ -9,9 +9,9 @@ CONTENTS OF THIS FILE
 SUMMARY
 -------
 
-ZIP Importer
+Bag Importer
 
-Imports ZIP files.
+Imports BagIt Bags into Islandora.
 
 REQUIREMENTS
 ------------
