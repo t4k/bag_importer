@@ -58,6 +58,9 @@ class BagBatchImporter extends IslandoraBatchImporter {
         '#type' => 'fieldset',
         '#title' => t('Bag Batch Importer'),
         '#description' => t('Select the file containing the serialized bag to import.'),
+        // Currently only accepts files with zip compression.
+        // TODO: Add support for .tar.gz and .tgz files.
+        // TODO: Add support for directories on the file system.
         'file' => array(
           '#type' => 'managed_file',
           '#title' => t('Bag containing files to import'),
@@ -153,12 +156,34 @@ class BagBatchImporter extends IslandoraBatchImporter {
       $name = $zip->getNameIndex($i);
       $path_info = pathinfo($name);
 
-      $object_key = $path_info['dirname'] . '-_-' . $path_info['filename'];
-      if (strpos($path_info['dirname'], '__MACOSX') === FALSE
-        && isset($path_info['extension'])
-        && $path_info['extension'] != 'DS_Store') {
-        $datastream_key = strtolower($path_info['extension']);
-        $info[$object_key][$datastream_key] = $name;
+      // We only care about MODS and OBJ datastreams.
+      if ($path_info['filename'] == 'MODS' || $path_info['filename'] == 'OBJ') {
+        // $object_key should be set to the object PID. Object PID will either
+        // be appended to the bag name or will be the name of a directory under
+        // the data directory. We should check the data directory contents to
+        // figure this out.
+        $bag_dirs = explode('/', $path_info['dirname']);
+        if (in_array('data', $bag_dirs, TRUE)) {
+          $parent_dir = end($bag_dirs);
+          if ($parent_dir == 'data') {
+            // the first element of $bag_dirs is the single object bag name and
+            // contains the object PID
+            $object_key = reset($bag_dirs);
+          }
+          else {
+            // $parent_dir is the object PID
+            $object_key = $parent_dir;
+          }
+          // set up $datastream_key
+          if ($path_info['filename'] == 'MODS') {
+            $datastream_key = 'xml';
+          }
+          elseif ($path_info['filename'] == 'OBJ') {
+            $datastream_key = strtolower($path_info['extension']);
+          }
+          // give it a value
+          $info[$object_key][$datastream_key] = $path_info['dirname'] . '/' . $path_info['basename'];
+        }
       }
     }
 
